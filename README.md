@@ -24,4 +24,4 @@ To train without, please run:
 `python baseline.py`  
 
 * This repo has been updated for code-refactoring and simplification on 2023.9.4.
-* This repo implements a one-pass scheduler. There are other design choices but the key idea is the same.
+* This repo implements a one-pass scheduler. There are other design choices (half normal scheduler for NLP segment under `archive` branch) but the key idea is the same.
