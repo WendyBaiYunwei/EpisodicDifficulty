@@ -26,8 +26,9 @@ class Rotate(object):
 def mini_imagenet_folders():
     params = get_config()
     folder = params['data_dir']
-    train_folder = folder + '/train'
-    test_folder = folder + '/val'
+    random.seed(params['seed'])
+    train_folder = os.path.join(folder, 'train')
+    test_folder = os.path.join(folder, 'val')
 
     metatrain_folders = [os.path.join(train_folder, label) \
                 for label in os.listdir(train_folder) \
@@ -45,8 +46,8 @@ def mini_imagenet_folders():
 
 class MiniImagenetTask(object):
 
-    def __init__(self, character_folders, num_classes, train_num,test_num):
-
+    def __init__(self, character_folders, num_classes, train_num,test_num, seed):
+        random.seed(seed)
         self.character_folders = character_folders
         self.num_classes = num_classes
         self.train_num = train_num
@@ -96,8 +97,6 @@ class FewShotDataset(Dataset):
 class MiniImagenet(FewShotDataset):
 
     def __init__(self, *args, **kwargs):
-        params = get_config()
-        random.seed(params['seed'])
         super(MiniImagenet, self).__init__(*args, **kwargs)
 
     def __getitem__(self, idx):
@@ -116,7 +115,10 @@ class ClassBalancedSampler(Sampler):
     ''' Samples 'num_inst' examples each from 'num_cl' pools
         of examples of size 'num_per_class' '''
 
-    def __init__(self, num_per_class, num_cl, num_inst,shuffle=True):
+    def __init__(self, num_per_class, num_cl, num_inst,shuffle=True,seed=0):
+        random.seed(seed)
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
         self.num_per_class = num_per_class
         self.num_cl = num_cl
         self.num_inst = num_inst
@@ -138,15 +140,15 @@ class ClassBalancedSampler(Sampler):
         return 1
 
 
-def get_mini_imagenet_data_loader(task, num_per_class=1, split='train',shuffle = False):
+def get_mini_imagenet_data_loader(task, num_per_class=1, split='train',shuffle = False, seed = 0):
     normalize = transforms.Normalize(mean=[0.92206, 0.92206, 0.92206], std=[0.08426, 0.08426, 0.08426])
 
     dataset = MiniImagenet(task,split=split,transform=transforms.Compose([transforms.ToTensor(),normalize]))
 
     if split == 'train':
-        sampler = ClassBalancedSampler(num_per_class, task.num_classes, task.train_num,shuffle=shuffle)
+        sampler = ClassBalancedSampler(num_per_class, task.num_classes, task.train_num,shuffle=shuffle,seed=seed)
     else:
-        sampler = ClassBalancedSampler(num_per_class, task.num_classes, task.test_num,shuffle=shuffle)
+        sampler = ClassBalancedSampler(num_per_class, task.num_classes, task.test_num,shuffle=shuffle,seed=seed)
 
     loader = DataLoader(dataset, batch_size=num_per_class*task.num_classes, sampler=sampler)
 

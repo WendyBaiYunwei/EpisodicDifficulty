@@ -4,19 +4,19 @@ import json
 import pickle
 import time
 
-with open('data/label_map.json', 'r') as f:
+with open('./data/label_map.json', 'r') as f:
     idx_to_label_name = json.load(f)
 
-with open('data/centroid_by_class.json') as f:
+with open('./data/centroid_by_class.json') as f:
     get_centroid_by_class = json.load(f)
 
-with open('data/embedding_sim.pkl', 'rb') as f:
+with open('./data/embedding_sim.pkl', 'rb') as f:
     sorted_adj = pickle.load(f)
 
-with open('data/embedding_new.pkl', 'rb') as f:
+with open('./data/embedding_new.pkl', 'rb') as f:
     embeddings = pickle.load(f).astype(np.float16)
 
-with open('data/imgNameToIdx.json', 'r') as f:
+with open('./data/imgNameToIdx.json', 'r') as f:
     name_to_idx = json.load(f)
 
 TTL_CLASSES = 64
@@ -30,7 +30,7 @@ def get_probs(counts):
     return normalizing_k * np.array(probabilities)
 
 def get_support_set_info(class_size, shot_size, trail_num):
-    counts = [1 for i in range(TTL_CLASSES)]
+    counts = [1 for i in range(TTL_CLASSES)] # class balancer, in place to prevent oversampling from certain classes.
     monte_carlo_trails = []
     for i in range(trail_num):
         if i % 25000 == 0:
@@ -65,13 +65,12 @@ def get_support_set_info(class_size, shot_size, trail_num):
         monte_carlo_trails.append([total_sim, class_idxes, support_set_list])
 
     monte_carlo_trails.sort(reverse=True)
-
     with open('./data/buffer.pkl','wb') as f:
         pickle.dump(monte_carlo_trails, f)
 
 
 if __name__ == '__main__':
     start = time.time()
-    get_support_set_info(5, 1, 150000)
+    get_support_set_info(5, 1, 150000) # 5 way 1 shot, 150000 episodes of support set in buffer
     end = time.time()
     print(end - start)

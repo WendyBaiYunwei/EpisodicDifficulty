@@ -49,11 +49,13 @@ class Sampler():
         mix = []
         for i in range(len(ss)):
             oneshot = ss[i]
-            if self.order_on:
+            if self.order_on: # one pass scheduler
+                start_i = int(len(self.sorted_adj[oneshot]) * ((self.difficulty_level - 1)/self.max_difficulty))
                 end_i = int(len(self.sorted_adj[oneshot]) * (self.difficulty_level/self.max_difficulty))
             else:
+                start_i = 0
                 end_i = len(self.sorted_adj[oneshot])
-            neighbours = self.sorted_adj[oneshot][:end_i]
+            neighbours = self.sorted_adj[oneshot][start_i:end_i]
             neighbours = [nb[1] for nb in neighbours]
             names = random.sample(neighbours, k = self.batch_size)
 

@@ -193,14 +193,15 @@ def main():
             accuracies = []
             print("Testing...")
             for i in range(TEST_EPISODE):
+                loop_seed = i
                 total_rewards = 0
                 counter = 0
-                task = tg.MiniImagenetTask(metatest_folders,CLASS_NUM,1,15)
-                sample_dataloader = tg.get_mini_imagenet_data_loader(task,num_per_class=1,split="train",shuffle=False)
-
+                task = tg.MiniImagenetTask(metatest_folders,CLASS_NUM,1,15, seed=loop_seed)
+                sample_dataloader = tg.get_mini_imagenet_data_loader(task,num_per_class=1,split="train",shuffle=False,\
+                    seed=loop_seed)
                 num_per_class = 3
                 test_dataloader = tg.get_mini_imagenet_data_loader(task,num_per_class=num_per_class,split="test",\
-                    shuffle=False)
+                    shuffle=False, seed=loop_seed)
                 sample_images,sample_labels,_ = next(iter(sample_dataloader))
                 for test_images,test_labels,_ in test_dataloader:
                     batch_size = test_labels.shape[0]
@@ -223,8 +224,8 @@ def main():
                     counter += batch_size
                 accuracy = total_rewards/1.0/counter
                 accuracies.append(accuracy)
-
             test_accuracy,h = mean_confidence_interval(accuracies)
+
 
             print('episode', episode, "test accuracy:", test_accuracy, "h:", h)
 
@@ -236,7 +237,7 @@ def main():
                 best_acc = test_accuracy
 
         if sampler.order_on and (episode + 1)%INTERVAL == 0:
-            if sampler.difficulty_level >= 3:
+            if sampler.difficulty_level >= sampler.max_difficulty - 1: # omit the most difficult interval
                 print('Train on entire dataset.')
                 sampler.order_on = False
             sampler.difficulty_level += 1
